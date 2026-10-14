@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kendini Keşfet — İlk Prototip</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f5f7;margin:0;color:#202124}
+.wrap{max-width:720px;margin:auto;padding:24px}
+.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 4px 18px #0001}
+h1{margin-top:0}.muted{color:#666}.bar{height:8px;background:#eee;border-radius:8px;overflow:hidden;margin:18px 0}.fill{height:100%;background:#333;width:0}
+.option{display:block;width:100%;text-align:left;padding:15px;margin:10px 0;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:16px;cursor:pointer}
+.option:hover{background:#f1f1f1}.btn{padding:14px 20px;border:0;border-radius:12px;background:#222;color:#fff;font-size:16px;cursor:pointer}
+.result{margin:14px 0;padding:16px;background:#f7f7f7;border-radius:14px}
+.score{font-size:28px;font-weight:bold}.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card" id="app">
+<h1>Kendini Keşfet</h1>
+<p class="muted">15 soruluk ilk karakter farkındalığı prototipi</p>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<div id="quiz"></div>
+</div>
+</div>
+<script>
+const questions=[
+["Bir konuda fikrinin doğru olduğuna inanıyorsan, başkaları karşı çıksa ne yaparsın?","Fikrimi hemen değiştiririm","Genellikle geri çekilirim","Dinler, sonra karar veririm","Fikrimi sakin biçimde savunurum","Gerekçelerimi açıklayıp gerektiğinde liderlik ederim","confidence"],
+["Yeni insanlarla tanışırken kendini nasıl hissedersin?","Çok zorlanırım","Biraz çekinirim","Duruma göre değişir","Genellikle rahatım","Kolayca iletişim kurarım","communication"],
+["Önemli bir karar vermen gerektiğinde hangisi sana daha yakın?","Kararı başkalarına bırakırım","Uzun süre erteleyebilirim","Artıları ve eksileri düşünürüm","Bilgi toplayıp karar veririm","Bilgiyi değerlendirip kararlı biçimde harekete geçerim","decision"],
+["Eleştiri aldığında ilk tepkin genellikle nedir?","Çok kötü hissederim","Savunmaya geçerim","Bir süre düşünürüm","Haklı kısmını ayırmaya çalışırım","Sakin kalıp eleştiriyi gelişim için kullanırım","resilience"],
+["Bir işi yapmaya karar verdiğinde ne kadar düzenli ilerlersin?","Çoğu zaman yarım bırakırım","Sık sık aksatırım","Duruma göre değişir","Genellikle tamamlarım","Planlı şekilde sonuna kadar götürürüm","discipline"],
+["Bir tartışmada karşı tarafın seni anlamadığını düşünürsen ne yaparsın?","Konuşmayı keserim","Sesimi yükseltebilirim","Kendimi tekrar anlatırım","Karşı tarafın bakış açısını da dinlerim","Sakin biçimde ortak noktayı bulmaya çalışırım","communication"],
+["Beklenmedik bir sorun çıktığında kendini nasıl yönetirsin?","Paniklerim","Çok zorlanırım","Önce durumu anlamaya çalışırım","Çözüm seçenekleri üretirim","Sakin kalıp çözüm için hızlıca harekete geçerim","resilience"],
+["Bir hedef belirlediğinde ne kadar istikrarlısın?","Çabuk vazgeçerim","Motivasyonum sık düşer","Bazen aksasa da devam ederim","Çoğunlukla istikrarlıyım","Hedefe ulaşana kadar sistemli çalışırım","discipline"],
+["Hata yaptığını fark ettiğinde ne yaparsın?","Görmezden gelirim","Bahane bulabilirim","Kabul ederim","Düzeltmeye çalışırım","Sorumluluğu alıp hatadan ders çıkarırım","confidence"],
+["Bir kararın sonuçlarından sorumlu olmak sana nasıl gelir?","Kaçınırım","Rahatsız olurum","Gerekirse üstlenirim","Genellikle üstlenirim","Sorumluluğu doğal olarak kabul ederim","decision"],
+["Birinin duygusunu anlamakta kendini nasıl değerlendirirsin?","Çok zorlanırım","Bazen fark edemem","Genellikle fark ederim","İyi empati kurarım","Karşımdakinin duygusunu ve ihtiyacını dikkatle okuyabilirim","communication"],
+["Zor bir dönem uzadığında ne olur?","Tamamen bırakırım","Motivasyonumu kaybederim","Bir süre zorlanırım","Kendimi toparlarım","Baskı altında bile dayanıklılığımı korurum","resilience"],
+["Günlük sorumluluklarını nasıl yönetirsin?","Sık sık unuturum","Çoğunu son dakikaya bırakırım","Önemlileri takip ederim","Genellikle planlıyım","Önceliklendirip düzenli biçimde yönetirim","discipline"],
+["Kendin hakkında olumsuz bir düşünce geldiğinde ne yaparsın?","Buna tamamen inanırım","Uzun süre etkisinde kalırım","Düşüncenin doğru olup olmadığını sorgularım","Kendime daha dengeli bakmaya çalışırım","Güçlü ve gelişime açık yönlerimi gerçekçi biçimde değerlendiririm","confidence"],
+["İki seçenek arasında kaldığında en çok neye güvenirsin?","Başkalarının kararına","O anki duyguma","Mantık ve duyguyu birlikte değerlendiririm","Bilgi ve sonuçları karşılaştırırım","Değerlerimi, bilgiyi ve olası sonuçları birlikte değerlendiririm","decision"]
+];
+const names={confidence:"Özgüven",communication:"İletişim",decision:"Karar Verme",resilience:"Duygusal Dayanıklılık",discipline:"Sorumluluk / Disiplin"};
+let i=0, answers=[];
+function render(){
+ const q=questions[i];
+ document.getElementById("fill").style.width=((i)/questions.length*100)+"%";
+ document.getElementById("quiz").innerHTML=`<p class="muted">Soru ${i+1} / ${questions.length}</p><h2>${q[0]}</h2>`+
+ q.slice(1,6).map((x,n)=>`<button class="option" onclick="answer(${n+1})">${n+1}. ${x}</button>`).join("");
+}
+function answer(v){answers[i]=v;if(i<questions.length-1){i++;render()}else{showResult()}}
+function showResult(){
+ let sums={confidence:0,communication:0,decision:0,resilience:0,discipline:0}, counts={...sums};
+ questions.forEach((q,n)=>{sums[q[6]]+=answers[n];counts[q[6]]++});
+ let rows=Object.keys(sums).map(k=>[k,Math.round(sums[k]/counts[k]*20)]);
+ rows.sort((a,b)=>b[1]-a[1]);
+ let top=rows[0], low=rows[rows.length-1];
+ document.getElementById("fill").style.width="100%";
+ document.getElementById("quiz").innerHTML=`<h2>Analiz Sonucun</h2>
+ <p>Bu sonuç klinik veya psikolojik teşhis değildir. İlk prototip, cevaplarından hareketle kişisel farkındalık sağlar.</p>
+ ${rows.map(r=>`<div class="result"><b>${names[r[0]]}</b><div class="score">${r[1]}/100</div></div>`).join("")}
+ <div class="result"><b>Öne çıkan güçlü alanın:</b><br>${names[top[0]]}</div>
+ <div class="result"><b>Gelişime en açık görünen alan:</b><br>${names[low[0]]}</div>
+ <button class="btn" onclick="location.reload()">Testi Yeniden Yap</button>`;
+}
+render();
+</script>
+</body></html>
